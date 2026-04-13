@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Go One More">
+<meta name="theme-color" content="#0a0a0a">
+<title>Go One More</title>
+<style>
+:root {
+  --bg:       #0a0a0a;
+  --card:     #141414;
+  --card2:    #1c1c1c;
+  --card3:    #242424;
+  --orange:   #f97316;
+  --orange2:  #fb923c;
+  --dim:      #c2410c;
+  --text:     #f0f0f0;
+  --muted:    #666;
+  --border:   #2a2a2a;
+  --green:    #22c55e;
+  --blue:     #3b82f6;
+  --purple:   #a855f7;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;overscroll-behavior:none}
+
+/* NAV */
+.nav{display:flex;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50;padding-top:var(--safe-top)}
+.nav-btn{flex:1;padding:14px 4px;background:none;border:none;color:var(--muted);font-size:.75rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.nav-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* PAGES */
+.page{display:none;padding:18px 16px;padding-bottom:calc(28px + var(--safe-bot));min-height:calc(100vh - 52px)}
+.page.active{display:block}
+
+/* ── TODAY ── */
+.date-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.date-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.streak-badge{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:700;color:var(--orange)}
+
+.quote-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 18px;margin-bottom:14px;position:relative;overflow:hidden}
+.quote-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--orange),var(--orange2),transparent)}
+.quote-mark{font-size:2.5rem;line-height:1;color:rgba(249,115,22,.3);font-family:Georgia,serif;margin-bottom:-4px;display:block}
+.quote-text{font-size:1.08rem;font-weight:500;line-height:1.6;color:var(--text);margin-bottom:12px}
+.quote-meta{display:flex;align-items:center;justify-content:space-between}
+.quote-author{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);font-weight:700}
+.share-btn{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 8px}
+
+.focus-card{background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(251,146,60,.04));border:1px solid rgba(249,115,22,.2);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
+.focus-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.focus-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);font-weight:700;margin-bottom:3px}
+.focus-title{font-size:.95rem;font-weight:700;margin-bottom:2px}
+.focus-sub{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+.intention-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.intention-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;margin-bottom:6px}
+.intention-text{font-size:.88rem;color:var(--text);line-height:1.55;font-style:italic}
+
+/* EXERCISES */
+.ex-section{margin-bottom:18px}
+.ex-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ex-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.ex-list{display:flex;flex-direction:column;gap:8px}
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.ex-card:active{border-color:var(--orange)}
+.ex-card-top{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.ex-num{width:26px;height:26px;border-radius:8px;background:rgba(249,115,22,.12);color:var(--orange);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ex-name{font-size:.92rem;font-weight:600;flex:1}
+.ex-sets{font-size:.78rem;color:var(--orange);font-weight:600;white-space:nowrap}
+.ex-expand{color:var(--muted);font-size:.8rem;transition:transform .2s;flex-shrink:0}
+.ex-card.open .ex-expand{transform:rotate(180deg)}
+.ex-detail{display:none;padding:0 14px 13px;font-size:.82rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:10px;margin-top:0}
+.ex-card.open .ex-detail{display:block}
+.ex-achilles{display:inline-block;background:rgba(251,146,60,.1);color:var(--orange2);border-radius:4px;padding:1px 6px;font-size:.68rem;font-weight:600;margin-left:6px}
+
+/* LOG */
+.log-section{margin-bottom:20px}
+.log-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;margin-bottom:10px}
+
+.muscle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.muscle-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;font-size:.72rem;font-weight:600;color:var(--muted)}
+.muscle-btn .mb-icon{font-size:1.2rem;display:block;margin-bottom:4px}
+.muscle-btn.active{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.4);color:var(--orange)}
+
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.check-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .15s;user-select:none}
+.check-item.checked{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.3)}
+.check-item.checked .check-box{background:var(--green);border-color:var(--green)}
+.check-item.checked .check-box::after{opacity:1}
+.check-box{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;position:relative;transition:all .15s}
+.check-box::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.78rem;color:#fff;font-weight:700;opacity:0;transition:opacity .15s}
+.check-label{font-size:.85rem;font-weight:500}
+.check-sub{font-size:.68rem;color:var(--muted)}
+
+.slider-row{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:9px}
+.slider-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.slider-label span:first-child{font-size:.85rem;font-weight:500}
+.slider-val{font-size:1.05rem;font-weight:700;color:var(--orange);min-width:34px;text-align:right}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:4px;background:var(--border);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--orange);cursor:pointer}
+
+.notes-field{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;color:var(--text);font-size:.88rem;font-family:inherit;resize:none;outline:none;min-height:80px;margin-bottom:14px}
+.notes-field:focus{border-color:var(--orange)}
+.notes-field::placeholder{color:var(--muted)}
+
+.save-btn{width:100%;padding:16px;background:var(--orange);color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:none;border-radius:14px;cursor:pointer;transition:all .15s}
+.save-btn:active{filter:brightness(.85);transform:scale(.98)}
+.save-btn.saved{background:var(--green)}
+
+/* HISTORY */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center}
+.stat-box .sb-val{font-size:1.5rem;font-weight:700;color:var(--orange)}
+.stat-box .sb-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:3px}
+.day-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px 16px;margin-bottom:10px}
+.day-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.day-card-date{font-size:.88rem;font-weight:600}
+.day-card-focus{font-size:.72rem;color:var(--muted);margin-top:2px}
+.day-card-score{font-size:1.2rem;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.chip{padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.18)}
+.chip.miss{background:rgba(102,102,102,.08);color:var(--muted);border-color:var(--border)}
+.day-note{font-size:.8rem;color:var(--muted);line-height:1.45;font-style:italic}
+.day-quote{font-size:.74rem;color:rgba(249,115,22,.6);margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.day-metrics{display:flex;gap:12px;margin-top:8px;font-size:.75rem;color:var(--muted)}
+.history-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.history-empty .he-icon{font-size:2.5rem;margin-bottom:10px}
+
+/* ABOUT */
+.about-hero{text-align:center;padding:28px 0 18px}
+.about-hero .ah-title{font-size:1.9rem;font-weight:800;letter-spacing:-.5px}
+.about-hero .ah-title span{color:var(--orange)}
+.about-hero .ah-sub{font-size:.82rem;color:var(--muted);margin-top:4px}
+.about-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.about-card h3{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--orange);margin-bottom:8px}
+.about-card p,.about-card li{font-size:.83rem;color:var(--muted);line-height:1.65}
+.about-card ol{padding-left:16px}
+.about-card li{margin-bottom:3px}
+.clear-btn{width:100%;padding:14px;background:transparent;color:#ef4444;border:1px solid #ef4444;border-radius:12px;font-size:.85rem;font-weight:600;cursor:pointer;margin-top:6px}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(16px);background:var(--green);color:#052e16;padding:11px 22px;border-radius:30px;font-size:.85rem;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.section-divider{height:1px;background:var(--border);margin:18px 0}
+.log-saved-badge{font-size:.72rem;color:var(--green);font-weight:600}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('today',this)">Today</button>
+  <button class="nav-btn" onclick="showPage('log',this)">Log</button>
+  <button class="nav-btn" onclick="showPage('history',this)">History</button>
+  <button class="nav-btn" onclick="showPage('about',this)">Profile</button>
+</nav>
+
+<!-- ═══ TODAY ═══ -->
+<div id="page-today" class="page active">
+  <div class="date-row">
+    <div class="date-label" id="todayDateLabel"></div>
+    <div class="streak-badge" id="streakBadge">🔥 0 days</div>
+  </div>
+
+  <div class="quote-card">
+    <span class="quote-mark">"</span>
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-meta">
+      <div class="quote-author" id="quoteAuthor"></div>
+      <button class="share-btn" onclick="shareQuote()" title="Share">↑ Share</button>
+    </div>
+  </div>
+
+  <div class="focus-card">
+    <div class="focus-icon" id="focusIcon"></div>
+    <div>
+      <div class="focus-label">Today's Training Focus</div>
+      <div class="focus-title" id="focusTitle"></div>
+      <div class="focus-sub" id="focusSub"></div>
+    </div>
+  </div>
+
+  <div class="intention-card">
+    <div class="intention-label">Today's Intention</div>
+    <div class="intention-text" id="intentionText"></div>
+  </div>
+
+  <div class="ex-section">
+    <div class="ex-header">
+      <div class="ex-title">Today's Exercises</div>
+    </div>
+    <div class="ex-list" id="todayExList"></div>
+  </div>
+
+  <button class="save-btn" style="background:var(--card);border:1px solid var(--border);color:var(--orange);margin-top:4px" onclick="showPage('log',document.querySelectorAll('.nav-btn')[1])">
+    Log Today →
+  </button>
+</div>
+
+<!-- ═══ LOG ═══ -->
+<div id="page-log" class="page">
+  <div class="date-row" style="margin-bottom:14px">
+    <div class="date-label" id="logDateLabel"></div>
+    <div id="logSavedBadge" class="log-saved-badge" style="display:none">✓ Logged</div>
+  </div>
+
+  <!-- Muscle group selector -->
+  <div class="log-section">
+    <div class="log-title">What are you training today?</div>
+    <div class="muscle-grid" id="muscleGrid"></div>
+  </div>
+
+  <!-- Exercise suggestions for selected muscle group -->
+  <div class="log-section" id="logExSection" style="display:none">
+    <div class="log-title">Suggested Exercises</div>
+    <div class="ex-list" id="logExList"></div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Activity checks -->
+  <div class="log-section">
+    <div class="log-title">Activity Checklist</div>
+    <div class="checks" id="checksGrid"></div>
+  </div>
+
+  <!-- Sliders -->
+  <div class="log-section">
+    <div class="log-title">Check-In Numbers</div>
+    <div class="slider-row">
+      <div class="slider-label"><span>Energy Level</span><span class="slider-val" id="energyVal">7</span></div>
+      <input type="range" id="energySlider" min="1" max="10" value="7" oninput="document.getElementById('energyVal').textContent=this.value">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><span>Sleep Last Night</span><span class="slider-val" id="sleepVal">7.0h</span></div>
+      <input type="range" id="sleepSlider" min="3" max="12" value="7" step=".5" oninput="document.getElementById('sleepVal').textContent=parseFloat(this.value).toFixed(1)+'h'">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><span>Overall Day</span><span class="slider-val" id="dayVal">7</span></div>
+      <input type="range" id="daySlider" min="1" max="10" value="7" oninput="document.getElementById('dayVal').textContent=this.value">
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="log-section">
+    <div class="log-title">Notes / Wins / What to Improve</div>
+    <textarea class="notes-field" id="notesField" placeholder="PR today? How did the Achilles feel? Run distance and pace? Anything to remember?"></textarea>
+  </div>
+
+  <button class="save-btn" id="saveBtn" onclick="saveLog()">Save Today's Log</button>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div id="page-history" class="page">
+  <div class="stat-row" id="histStats"></div>
+  <div id="historyList"></div>
+</div>
+
+<!-- ═══ ABOUT ═══ -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div class="ah-title">Go <span>One</span> More</div>
+    <div class="ah-sub">Nick Bare ethos · Built for the comeback · Fall 2026</div>
+  </div>
+  <div class="about-card">
+    <h3>The Mission</h3>
+    <p>Stay physically fit and active for family — for decades. Run a half-marathon by fall 2026. Keep building muscle. Do it all, the hybrid way.</p>
+  </div>
+  <div class="about-card">
+    <h3>Your PPL Split</h3>
+    <p>Mon: Chest · Tue: Back · Wed: Legs (Quad) · Thu: Shoulders · Fri: Arms · Sat: Legs (Posterior) · Sun: Rest</p>
+  </div>
+  <div class="about-card">
+    <h3>Half-Marathon Roadmap</h3>
+    <ol>
+      <li>Now → June: 3 runs/week, max 4 mi, easy pace only</li>
+      <li>June → Aug: Build long run to 6–8 miles</li>
+      <li>Aug → Oct: Formal training plan. Race day.</li>
+    </ol>
+  </div>
+  <div class="about-card">
+    <h3>Add to iPhone Home Screen</h3>
+    <ol>
+      <li>Open this file in Safari on your iPhone</li>
+      <li>Tap the Share button (box with ↑ arrow)</li>
+      <li>Scroll down and tap "Add to Home Screen"</li>
+      <li>Name it "Go One More" → tap Add</li>
+    </ol>
+  </div>
+  <div class="about-card">
+    <h3>Your Stats</h3>
+    <div class="stat-row" id="aboutStats" style="margin-bottom:0"></div>
+  </div>
+  <button class="clear-btn" onclick="clearAllData()">Clear All Log Data</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  QUOTES  — Go One More · Goggins · Jocko · Williamson
+//            · Chadd Wright · Marcus Aurelius · + more
+// ════════════════════════════════════════════════════
+const QUOTES = [
+  // Nick Bare / Go One More
+  { text: "When you feel like stopping, go one more. One more rep, one more mile, one more day.", author: "Nick Bare" },
+  { text: "Brute force wins when talent gives up.", author: "Nick Bare" },
+  { text: "Consistency is the only shortcut that actually works.", author: "Nick Bare" },
+  { text: "Wake up. Train. Be better than yesterday.", author: "Nick Bare" },
+  { text: "One more rep. One more mile. One more reason to be proud of yourself.", author: "Nick Bare" },
+  { text: "The person you're becoming is built in the moments you wanted to quit but didn't.", author: "Go One More" },
+  { text: "Your future self is watching. Don't let him down.", author: "Go One More" },
+  { text: "Strong enough to lift. Fast enough to run. Tough enough to do both.", author: "Go One More" },
+  { text: "The comeback is always stronger than the setback.", author: "Go One More" },
+  { text: "What broke you doesn't define you. What you build from it does.", author: "Go One More" },
+  { text: "You didn't come this far to only come this far.", author: "Go One More" },
+  { text: "Every rep is for them. Every mile is for them. Every hard morning is for them.", author: "Go One More" },
+  { text: "Injured, not broken. Healing, not giving up.", author: "Go One More" },
+  { text: "I'll do what others won't, so I can live how others can't.", author: "Go One More" },
+  { text: "Two types of pain: the pain of discipline and the pain of regret. Choose wisely.", author: "Go One More" },
+  { text: "The best thing a father can do is show his kids what it looks like to never quit.", author: "Go One More" },
+  { text: "You're not just training your body. You're training your character.", author: "Go One More" },
+  { text: "Today's effort is tomorrow's baseline.", author: "Go One More" },
+  { text: "Run your own race. At your own pace. On your own terms.", author: "Go One More" },
+
+  // David Goggins
+  { text: "Don't stop when you're tired. Stop when you're done.", author: "David Goggins" },
+  { text: "Callous your mind the same way you callous your hands.", author: "David Goggins" },
+  { text: "You are not who you think you are. You are who you prove yourself to be.", author: "David Goggins" },
+  { text: "The most important conversations you'll ever have are the ones you have with yourself.", author: "David Goggins" },
+  { text: "No one is coming to save you. No one is coming to the rescue. You have to save yourself.", author: "David Goggins" },
+  { text: "Everybody comes to a point in their life when they want to quit. What you do at that moment determines who you are.", author: "David Goggins" },
+  { text: "It's okay to fail. It's not okay to quit.", author: "David Goggins" },
+  { text: "Motivation is crap. When you're truly driven, whatever's in front of you will get destroyed.", author: "David Goggins" },
+  { text: "Fill your cookie jar — every win, every hard thing overcome. Draw from it when things get dark.", author: "David Goggins" },
+  { text: "Mental weakness is the biggest killer of dreams. Strengthen your mind like your body.", author: "David Goggins" },
+  { text: "Suffering is the true test of life. Embrace it.", author: "David Goggins" },
+  { text: "You're going to fail. You're going to be in your head. Keep going anyway.", author: "David Goggins" },
+
+  // Jocko Willink
+  { text: "Discipline equals freedom.", author: "Jocko Willink" },
+  { text: "Good.", author: "Jocko Willink" },
+  { text: "Don't count on motivation. Count on discipline.", author: "Jocko Willink" },
+  { text: "If you want to be tougher mentally, it is simple: Be tougher. Don't meditate on it.", author: "Jocko Willink" },
+  { text: "Wake up earlier than everyone else. That is the first battle of the day — and you've already won it.", author: "Jocko Willink" },
+  { text: "Own everything in your world. Blame nothing. Execute.", author: "Jocko Willink" },
+  { text: "0445 — while the world sleeps, you are getting better.", author: "Jocko Willink" },
+  { text: "Detach. See the battlefield clearly. Then act with precision.", author: "Jocko Willink" },
+  { text: "When things are going bad: don't get frustrated. Look at the situation and say — Good. Now get after it.", author: "Jocko Willink" },
+  { text: "The only easy day was yesterday.", author: "Jocko Willink" },
+  { text: "You've got to own your schedule, or your schedule will own you.", author: "Jocko Willink" },
+  { text: "Leadership is not about being in charge. It's about taking care of those in your charge.", author: "Jocko Willink" },
+
+  // Chris Williamson
+  { text: "Hard choices, easy life. Easy choices, hard life.", author: "Chris Williamson" },
+  { text: "Every day you avoid the hard thing is a day you practice being the kind of person who avoids hard things.", author: "Chris Williamson" },
+  { text: "The quality of your life is the quality of your conversations — including the ones you have with yourself.", author: "Chris Williamson" },
+  { text: "Most people overestimate what they can do in a day and underestimate what they can do in a decade.", author: "Chris Williamson" },
+  { text: "You don't rise to the level of your goals. You fall to the level of your systems.", author: "Chris Williamson" },
+  { text: "Comfort is the enemy of growth. Seek discomfort deliberately.", author: "Chris Williamson" },
+  { text: "The person who says they don't have time is the person who hasn't decided it's a priority yet.", author: "Chris Williamson" },
+  { text: "You become what you repeatedly do. Choose your repetitions carefully.", author: "Chris Williamson" },
+  { text: "The gap between who you are and who you want to be is only closed by consistent action.", author: "Chris Williamson" },
+  { text: "Stop waiting to feel ready. Readiness is a feeling you earn, not one you wait for.", author: "Chris Williamson" },
+
+  // Chadd Wright
+  { text: "The body will follow the mind. Train your mind first.", author: "Chadd Wright" },
+  { text: "Most people quit in their head before they quit with their body.", author: "Chadd Wright" },
+  { text: "You're never as tired as you think you are.", author: "Chadd Wright" },
+  { text: "Suffering is the currency of excellence.", author: "Chadd Wright" },
+  { text: "Be so disciplined that discipline becomes your identity.", author: "Chadd Wright" },
+  { text: "Control your breath. Control your body. Control your mind. In that order.", author: "Chadd Wright" },
+  { text: "When the mission is clear, the obstacles become manageable.", author: "Chadd Wright" },
+  { text: "The hardest step is always the first one out the door. After that, your body takes over.", author: "Chadd Wright" },
+  { text: "Three of seven — you decide if you're the one who makes it through.", author: "Chadd Wright" },
+  { text: "Pain is a signal, not a stop sign. Learn the difference.", author: "Chadd Wright" },
+
+  // Marcus Aurelius
+  { text: "You have power over your mind, not outside events. Realize this and you will find strength.", author: "Marcus Aurelius" },
+  { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius" },
+  { text: "Waste no more time arguing about what a good man should be. Be one.", author: "Marcus Aurelius" },
+  { text: "You have to assemble your life yourself — action by action.", author: "Marcus Aurelius" },
+  { text: "It is not death that a man should fear, but he should fear never beginning to live.", author: "Marcus Aurelius" },
+  { text: "Do not indulge in dreams of what you have not, but count the blessings actually present.", author: "Marcus Aurelius" },
+  { text: "Accept the things fate binds you to. Love the people fate brings you. Do the work.", author: "Marcus Aurelius" },
+  { text: "The first rule is to keep an untroubled spirit. The second is to look things in the face and know them.", author: "Marcus Aurelius" },
+
+  // Others
+  { text: "A fit body, a calm mind, a house full of love. These cannot be bought — they must be earned.", author: "Naval Ravikant" },
+  { text: "The miracle isn't that I finished. The miracle is that I had the courage to start.", author: "John Bingham" },
+  { text: "Pain is temporary. Quitting lasts forever.", author: "Lance Armstrong" },
+  { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
+  { text: "The successful warrior is the average man with laser-like focus.", author: "Bruce Lee" },
+  { text: "It's supposed to be hard. If it wasn't hard, everyone would do it. The hard is what makes it great.", author: "Tom Hanks" },
+  { text: "No man has the right to be an amateur in the matter of physical training.", author: "Socrates" },
+  { text: "The first wealth is health.", author: "Ralph Waldo Emerson" },
+  { text: "Fall seven times, stand up eight.", author: "Japanese Proverb" },
+  { text: "Run when you can, walk if you have to, crawl if you must. Just never give up.", author: "Dean Karnazes" },
+  { text: "Your legs are not giving out. Your head is giving out. Keep going.", author: "Runner's Wisdom" },
+  { text: "Today I will do what others won't, so tomorrow I can do what others can't.", author: "Jerry Rice" },
+  { text: "You've survived 100% of your worst days. Keep going.", author: "Go One More" },
+  { text: "Your current situation is not your final destination.", author: "Go One More" },
+];
+
+// ════════════════════════════════════════════════════
+//  EXERCISE DATABASE
+// ════════════════════════════════════════════════════
+const EXERCISES = {
+  chest: [
+    { name:"Barbell Bench Press", sets:"4×5", tip:"Control the eccentric — 3 seconds down. Feet planted, arch natural, bar touches lower chest." },
+    { name:"Incline Dumbbell Press", sets:"3×10–12", tip:"30–45° incline. Slight inward press at the top to fully contract upper chest." },
+    { name:"Cable Fly (Low to High)", sets:"3×15", tip:"Lower pulley. Arc up and in. Feel the stretch at the bottom — don't rush it." },
+    { name:"Weighted Dips", sets:"3×10–12", tip:"Lean slightly forward to bias chest. Full depth. Controlled at the top.", achilles:false },
+    { name:"Incline Barbell Press", sets:"4×8", tip:"Drive through your heels. Keep the bar path slightly toward your chin." },
+    { name:"Pec Deck / Machine Fly", sets:"3×15", tip:"Full ROM. Pause at peak contraction — that's where the growth happens." },
+    { name:"Low Cable Fly", sets:"3×15", tip:"Arms slightly bent. Think 'hugging a barrel.' Squeeze hard at the top." },
+    { name:"Push-Up (Weighted)", sets:"3 × failure", tip:"Plate on back. Slow descent, explosive up. Touch chest to ground each rep." },
+  ],
+  back: [
+    { name:"Barbell Row", sets:"4×6–8", tip:"Hinge to ~45°. Pull to lower sternum. Squeeze the lats at the top — don't just move the bar." },
+    { name:"Weighted Pull-Ups", sets:"4×6–8", tip:"Full hang to chin over bar. Initiate with the lats, not the arms." },
+    { name:"Lat Pulldown", sets:"3×12", tip:"Pull to upper chest. Lean back slightly. Control the return — the eccentric builds width." },
+    { name:"Seated Cable Row", sets:"3×12", tip:"Drive elbows back past your hips. Chest tall, don't round at the top of the stretch." },
+    { name:"Single-Arm Dumbbell Row", sets:"3×12 each", tip:"Supported on bench. Think 'elbow to pocket.' Full stretch at the bottom." },
+    { name:"Straight Arm Pulldown", sets:"3×15", tip:"Arms straight. Think of it as a crunch for your lats. Burn the lat on every rep." },
+    { name:"Face Pull", sets:"3×20", tip:"Rope to forehead, elbows high. Underrated for shoulder health and rear delt development." },
+    { name:"T-Bar Row", sets:"4×8", tip:"Controlled, not heaved. Squeeze at the top. Thickness builder." },
+  ],
+  shoulders: [
+    { name:"Barbell Overhead Press", sets:"4×5–8", tip:"Bar starts at collarbone, press vertical, lock out overhead. Core tight throughout." },
+    { name:"Dumbbell Lateral Raise", sets:"4×15–20", tip:"Slight bend in elbow. Lead with your pinky, not your thumb. Feel the burn — earn it." },
+    { name:"Arnold Press", sets:"3×12", tip:"Rotation adds front delt emphasis. Control the descent. Full ROM." },
+    { name:"Cable Lateral Raise", sets:"3×15 each", tip:"Cross-body cable. Constant tension vs. dumbbells. Excellent finisher." },
+    { name:"Rear Delt Fly (Pec Deck Reverse)", sets:"3×20", tip:"Arms slightly bent. Drive elbows back, not out. Squeeze rear delt — not traps." },
+    { name:"Upright Row (Cable)", sets:"3×15", tip:"Elbows lead, wrists below. Cable keeps tension constant. Builds upper trap and lateral delt." },
+    { name:"Face Pull (Rear Delt)", sets:"3×20", tip:"High anchor. Elbows high and wide. Pull to forehead. Essential for shoulder longevity." },
+    { name:"Seated DB Shoulder Press", sets:"4×10", tip:"Back supported. Full lockout overhead. Control the negative." },
+  ],
+  arms: [
+    { name:"Barbell Curl", sets:"4×10–12", tip:"Elbows pinned to sides. Full stretch at the bottom. Don't swing — tempo is everything." },
+    { name:"Incline Dumbbell Curl", sets:"3×12", tip:"The stretch position at the bottom is where this exercise shines. Don't rush it." },
+    { name:"Hammer Curl", sets:"3×15", tip:"Neutral grip. Works brachialis — adds thickness and peak to the arm." },
+    { name:"Concentration Curl", sets:"3×12 each", tip:"Elbow braced on inner thigh. Full squeeze at the top. No momentum." },
+    { name:"Close-Grip Bench Press", sets:"4×8–10", tip:"Hands shoulder-width. Elbows tucked. Heaviest tricep builder. Control the descent." },
+    { name:"Skull Crusher (EZ-Bar)", sets:"3×12", tip:"Lower to forehead, extend straight up. Keep elbows pointing at the ceiling." },
+    { name:"Rope Pushdown", sets:"3×15–20", tip:"Flare the rope at the bottom for a full contraction. Elbows pinned to sides." },
+    { name:"Overhead Tricep Extension", sets:"3×15", tip:"Single DB or cable. Full stretch overhead is key — the long head loves this." },
+    { name:"Preacher Curl (EZ-Bar)", sets:"3×12", tip:"Full ROM. Peak squeeze. No cheating — the pad removes momentum." },
+    { name:"Cable Curl", sets:"3×15", tip:"Constant tension. Use the bicep to curl — not the shoulders or back." },
+  ],
+  legs_quad: [
+    { name:"Back Squat", sets:"4×5", tip:"Depth past parallel. Knees track toes. Big breath, brace, drive the floor away.", achilles:true },
+    { name:"Leg Press", sets:"4×10–15", tip:"High and wide foot placement for glutes. Low and narrow for quads. Full ROM — stop just short of knees locking." },
+    { name:"Hack Squat", sets:"3×12", tip:"Heels elevated for quad emphasis. Deep as possible. Constant tension on the way down.", achilles:true },
+    { name:"Bulgarian Split Squat", sets:"3×10 each", tip:"Front foot far enough to keep shin vertical. Quad-killer. Go slow on the descent.", achilles:true },
+    { name:"Leg Extension", sets:"3×15–20", tip:"Slow 3-second eccentric. Pause at top. VMO activation — great finisher or pre-exhaust." },
+    { name:"Goblet Squat", sets:"3×15", tip:"Kettlebell or DB at chest. Upright torso. Excellent for mobility and quad development.", achilles:true },
+    { name:"Sissy Squat", sets:"3×12", tip:"Lean back as you lower. Heels off ground. Brutal quad isolation — control every inch." },
+  ],
+  legs_post: [
+    { name:"Romanian Deadlift", sets:"4×8–10", tip:"Hinge at hips, soft bend in knees. Feel the hamstring stretch. Bar stays close to legs. No Achilles load.", achilles:false },
+    { name:"Lying Leg Curl", sets:"3×12–15", tip:"Curl all the way to your glutes. Pause at top. Slow negative — the eccentric is where it counts." },
+    { name:"Seated Leg Curl", sets:"3×15", tip:"Different hip angle hits the hamstring differently. Use both machines when available." },
+    { name:"Hip Thrust (Barbell)", sets:"4×12", tip:"Shoulder blades on bench, bar at hips. Drive through heels. Glute squeeze at the top." },
+    { name:"Good Morning", sets:"3×15", tip:"Light to moderate weight. Hinge deep, keep a neutral spine. Hamstrings and erectors." },
+    { name:"Glute Bridge", sets:"3×20", tip:"Bodyweight or banded. Squeeze hard at the top. Great Achilles-friendly option." },
+    { name:"Nordic Curl (Eccentric)", sets:"3×5 slow", tip:"Go as slow as possible on the descent. One of the best posterior chain builders — and Achilles friendly." },
+    { name:"Sumo Deadlift", sets:"4×6", tip:"Wide stance, toes out. Drive knees out. More glute and inner thigh than conventional." },
+  ],
+  rest: [
+    { name:"Eccentric Heel Drop", sets:"3×15 each (slow)", tip:"Stand on step edge. Rise on both feet, lower on one — 3 second negative. Non-negotiable Achilles rehab." },
+    { name:"Couch Stretch", sets:"2×60s each side", tip:"Hip flexor at its deepest. Rear knee on floor, front foot on wall. Breathe into it." },
+    { name:"Thoracic Foam Roll", sets:"2×10 extensions", tip:"T-spine over roller, arms crossed. Extend over it at each thoracic segment. Opens the chest and upper back." },
+    { name:"90-90 Hip Stretch", sets:"2×60s each", tip:"Both legs at 90°. Sit tall, lean gently over front shin. Unlocks hip internal rotation." },
+    { name:"Dead Hang", sets:"3×30–60s", tip:"Passive hang from bar. Decompresses the spine, builds grip, stretches the lats. Dead simple, incredibly effective." },
+    { name:"Banded Shoulder Dislocate", sets:"2×15", tip:"Wide grip on band. Keep arms straight, bring overhead and behind. Shoulder mobility essential." },
+  ],
+};
+
+// ════════════════════════════════════════════════════
+//  TRAINING SCHEDULE
+// ════════════════════════════════════════════════════
+const TRAINING = [
+  { icon:'🛌', title:'Rest & Recovery', sub:'Full rest. Let the work absorb. Walk, stretch, sauna if possible.', muscle:'rest', intention:"Recovery isn't weakness — it's where adaptation happens. Protect today completely." },
+  { icon:'💪', title:'Chest Day', sub:'Primary: Chest · Secondary: Shoulders · Triceps woven in.', muscle:'chest', intention:"Set the tone for the week. How you show up on Monday says everything about who you're becoming." },
+  { icon:'🏋️', title:'Back Day', sub:'Primary: Back · Secondary: Arms (Biceps). Rows, pull-ups, then biceps after back volume.', muscle:'back', intention:"A strong back carries more than weight — it carries posture, longevity, and the ability to keep showing up." },
+  { icon:'🦵', title:'Leg Day I — Quads', sub:'Quad-dominant. Squat variations, leg press, hack squat. Achilles-aware today.', muscle:'legs_quad', intention:"Leg day separates the committed from the comfortable. You're not most people. Prove it." },
+  { icon:'🔺', title:'Shoulder Day', sub:'Primary: Shoulders · Secondary: Chest mixed in. OHP, lateral raises, then incline.', muscle:'shoulders', intention:"Shoulders are the frame of the physique. Build them with precision. Own the overhead press." },
+  { icon:'💥', title:'Arms Day', sub:'Biceps + Triceps. Pure isolation. Chase the pump — you earned this day by showing up all week.', muscle:'arms', intention:"Friday is evidence. Evidence that you showed up Monday through Thursday when no one was watching." },
+  { icon:'🦵', title:'Leg Day II — Posterior', sub:'Posterior chain focus. Romanian DL, leg curl, hip thrust. Monitor Achilles closely.', muscle:'legs_post', intention:"Two leg days a week is a commitment most skip. That gap between you and them? It's built right here." },
+];
+
+const INTENTIONS = [
+  "Show up. Do the work. The rest takes care of itself.",
+  "You don't need to be perfect. You need to be consistent.",
+  "One percent better every single day. That's all it takes.",
+  "The version of you your family sees is built in moments exactly like this one.",
+  "Train like the comeback story isn't written yet. Because it isn't.",
+  "Hard days build hard people. This is one of those days.",
+  "Every great story has a chapter where the hero almost gave up. Keep writing yours.",
+  "The Achilles healed. The runner returns. That's the story. Keep writing it.",
+  "Fall 2026: you cross that finish line. Today is a brick in that bridge.",
+  "The gym, the road, the sauna — this is where character is built, rep by rep.",
+  "What would Nick Bare do? Then go do that.",
+  "Your kids are watching. Not the workout. You. Who you choose to be.",
+  "Progress is invisible day to day and undeniable year to year. Stay the course.",
+  "Do it tired. Do it sore. Do it scared. Just do it.",
+  "Every mile you run is a mile the injury couldn't take from you. Reclaim them all.",
+];
+
+const MUSCLE_GROUPS = [
+  { id:'chest',     label:'Chest',      icon:'💪' },
+  { id:'back',      label:'Back',       icon:'🏋️' },
+  { id:'shoulders', label:'Shoulders',  icon:'🔺' },
+  { id:'arms',      label:'Arms',       icon:'💥' },
+  { id:'legs_quad', label:'Legs (Quad)',icon:'🦵' },
+  { id:'legs_post', label:'Legs (Post)',icon:'🦵' },
+  { id:'rest',      label:'Rest / Rehab',icon:'🛌' },
+  { id:'custom',    label:'Off Plan',   icon:'⚡' },
+];
+
+const CHECKS = [
+  { id:'trained', label:'Trained', sub:'Hit the weights' },
+  { id:'ran',     label:'Ran',     sub:'Running / cardio' },
+  { id:'sauna',   label:'Sauna',   sub:'15–20 min' },
+  { id:'stretch', label:'Stretched', sub:'Mobility work' },
+  { id:'hydrate', label:'Hydrated', sub:'8+ glasses' },
+  { id:'sleep8',  label:'Early Bed', sub:'In bed by 10' },
+];
+
+// ════════════════════════════════════════════════════
+//  DATA LAYER
+// ════════════════════════════════════════════════════
+const todayStr = () => new Date().toISOString().slice(0,10);
+const dayOfYear = d => Math.floor((d - new Date(d.getFullYear(),0,0)) / 86400000);
+const loadLog  = date => { try { return JSON.parse(localStorage.getItem('gom_'+date)||'null'); } catch { return null; } };
+const saveLogData = (date,data) => localStorage.setItem('gom_'+date, JSON.stringify(data));
+function getAllLogs() {
+  const logs = [];
+  for (let i=0;i<localStorage.length;i++) {
+    const k=localStorage.key(i);
+    if (k&&k.startsWith('gom_')) try { logs.push({ date:k.slice(4),...JSON.parse(localStorage.getItem(k)) }); } catch{}
+  }
+  return logs.sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+function getQuote() { return QUOTES[dayOfYear(new Date()) % QUOTES.length]; }
+function getFocus() { return TRAINING[new Date().getDay()]; }
+function getIntention() { return INTENTIONS[dayOfYear(new Date()) % INTENTIONS.length]; }
+
+function pickExercises(muscleKey, count=3) {
+  const pool = EXERCISES[muscleKey];
+  if (!pool) return [];
+  // Seed by date so exercises change each day but are deterministic
+  const seed = dayOfYear(new Date());
+  const out = [];
+  const indices = [];
+  for (let i=0; i<pool.length; i++) indices.push(i);
+  // Simple deterministic shuffle
+  for (let i=indices.length-1; i>0; i--) {
+    const j = (seed * (i+1) * 2654435761) % (i+1);
+    [indices[i],indices[j]] = [indices[j],indices[i]];
+  }
+  return indices.slice(0,count).map(i => pool[i]);
+}
+
+function exCardHTML(ex, num) {
+  const achillesTag = ex.achilles ? '<span class="ex-achilles">⚠ Achilles</span>' : '';
+  return `
+    <div class="ex-card" onclick="this.classList.toggle('open')">
+      <div class="ex-card-top">
+        <div class="ex-num">${num}</div>
+        <div class="ex-name">${ex.name}${achillesTag}</div>
+        <div class="ex-sets">${ex.sets}</div>
+        <div class="ex-expand">▾</div>
+      </div>
+      <div class="ex-detail">${ex.tip}</div>
+    </div>`;
+}
+
+function getStreak() {
+  const dates = new Set(getAllLogs().map(l=>l.date));
+  let streak=0, d=new Date();
+  while(true) {
+    const ds=d.toISOString().slice(0,10);
+    if (dates.has(ds)) { streak++; d.setDate(d.getDate()-1); }
+    else if (streak===0 && ds===todayStr()) { d.setDate(d.getDate()-1); }
+    else break;
+    if (streak > 365) break;
+  }
+  return streak;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER — TODAY
+// ════════════════════════════════════════════════════
+function renderToday() {
+  const d = new Date();
+  document.getElementById('todayDateLabel').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('streakBadge').textContent = `🔥 ${getStreak()} day${getStreak()!==1?'s':''}`;
+
+  const q = getQuote();
+  document.getElementById('quoteText').textContent = q.text;
+  document.getElementById('quoteAuthor').textContent = '— ' + q.author;
+
+  const focus = getFocus();
+  document.getElementById('focusIcon').textContent = focus.icon;
+  document.getElementById('focusTitle').textContent = focus.title;
+  document.getElementById('focusSub').textContent = focus.sub;
+  document.getElementById('intentionText').textContent = getIntention();
+
+  const exs = pickExercises(focus.muscle, 3);
+  document.getElementById('todayExList').innerHTML = exs.length
+    ? exs.map((ex,i) => exCardHTML(ex, i+1)).join('')
+    : '<div style="font-size:.82rem;color:var(--muted);padding:10px 0">Rest, recover, and recharge.</div>';
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER — LOG
+// ════════════════════════════════════════════════════
+let selectedMuscle = null;
+
+function renderLogForm() {
+  const d = new Date();
+  document.getElementById('logDateLabel').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  // Default selected muscle = today's focus
+  selectedMuscle = getFocus().muscle;
+
+  // Build muscle group buttons
+  document.getElementById('muscleGrid').innerHTML = MUSCLE_GROUPS.map(mg => `
+    <div class="muscle-btn ${mg.id===selectedMuscle?'active':''}" onclick="selectMuscle('${mg.id}',this)">
+      <span class="mb-icon">${mg.icon}</span>${mg.label}
+    </div>`).join('');
+
+  // Build checks
+  document.getElementById('checksGrid').innerHTML = CHECKS.map(c => `
+    <div class="check-item" id="ci-${c.id}" onclick="toggleCheck('${c.id}')">
+      <div class="check-box" id="cb-${c.id}"></div>
+      <div><div class="check-label">${c.label}</div><div class="check-sub">${c.sub}</div></div>
+    </div>`).join('');
+
+  showLogExercises(selectedMuscle);
+
+  // Restore existing log
+  const existing = loadLog(todayStr());
+  if (existing) {
+    (existing.checks||[]).forEach(id => {
+      document.getElementById('ci-'+id)?.classList.add('checked');
+      document.getElementById('cb-'+id)?.classList.add('checked');
+    });
+    if (existing.energy) { document.getElementById('energySlider').value=existing.energy; document.getElementById('energyVal').textContent=existing.energy; }
+    if (existing.sleep) { document.getElementById('sleepSlider').value=existing.sleep; document.getElementById('sleepVal').textContent=parseFloat(existing.sleep).toFixed(1)+'h'; }
+    if (existing.day) { document.getElementById('daySlider').value=existing.day; document.getElementById('dayVal').textContent=existing.day; }
+    if (existing.notes) document.getElementById('notesField').value=existing.notes;
+    if (existing.muscle) { selectedMuscle=existing.muscle; showLogExercises(existing.muscle); updateMuscleButtons(existing.muscle); }
+    document.getElementById('logSavedBadge').style.display='block';
+    document.getElementById('saveBtn').textContent='Update Log';
+  }
+}
+
+function selectMuscle(id, btn) {
+  selectedMuscle = id;
+  updateMuscleButtons(id);
+  showLogExercises(id);
+}
+
+function updateMuscleButtons(id) {
+  document.querySelectorAll('.muscle-btn').forEach(b=>b.classList.remove('active'));
+  // Find and activate
+  document.querySelectorAll('.muscle-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes(`'${id}'`)) b.classList.add('active');
+  });
+}
+
+function showLogExercises(muscleKey) {
+  const section = document.getElementById('logExSection');
+  const list = document.getElementById('logExList');
+  if (muscleKey === 'custom') { section.style.display='none'; return; }
+  const exs = pickExercises(muscleKey, 3);
+  if (!exs.length) { section.style.display='none'; return; }
+  section.style.display='block';
+  list.innerHTML = exs.map((ex,i) => exCardHTML(ex,i+1)).join('');
+}
+
+function toggleCheck(id) {
+  document.getElementById('ci-'+id)?.classList.toggle('checked');
+  document.getElementById('cb-'+id)?.classList.toggle('checked');
+}
+
+function saveLog() {
+  const today = todayStr();
+  const checks = CHECKS.map(c=>c.id).filter(id=>document.getElementById('ci-'+id)?.classList.contains('checked'));
+  const q = getQuote();
+  const entry = {
+    date:today, checks,
+    muscle: selectedMuscle,
+    energy:parseInt(document.getElementById('energySlider').value),
+    sleep:parseFloat(document.getElementById('sleepSlider').value),
+    day:parseInt(document.getElementById('daySlider').value),
+    notes:document.getElementById('notesField').value.trim(),
+    quote:q.text, quoteAuthor:q.author, focus:getFocus().title,
+  };
+  saveLogData(today, entry);
+  document.getElementById('logSavedBadge').style.display='block';
+  const btn = document.getElementById('saveBtn');
+  btn.textContent='✓ Saved!'; btn.classList.add('saved');
+  setTimeout(()=>{ btn.textContent='Update Log'; btn.classList.remove('saved'); },2000);
+  showToast('Logged. Go one more. 🔥');
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER — HISTORY
+// ════════════════════════════════════════════════════
+function renderHistory() {
+  const logs = getAllLogs();
+  const streak = getStreak();
+  const saunas = logs.filter(l=>l.checks?.includes('sauna')).length;
+  const runs = logs.filter(l=>l.checks?.includes('ran')).length;
+
+  const statsHTML = [
+    ['📅',logs.length,'Days Logged'],
+    ['🔥',streak,'Day Streak'],
+    ['🏃',runs,'Runs Logged'],
+    ['🧖',saunas,'Saunas'],
+  ].map(([icon,val,label])=>`<div class="stat-box"><div class="sb-val">${icon} ${val}</div><div class="sb-label">${label}</div></div>`).join('');
+
+  // Use 4-column grid for history stats
+  const statRow = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">${statsHTML}</div>`;
+  document.getElementById('histStats').outerHTML = statRow;
+  const aboutEl = document.getElementById('aboutStats');
+  if (aboutEl) aboutEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${statsHTML}</div>`;
+
+  const list = document.getElementById('historyList');
+  if (!logs.length) {
+    list.innerHTML='<div class="history-empty"><div class="he-icon">📖</div><p style="font-size:.85rem;color:var(--muted)">No logs yet. Start your streak today.</p></div>';
+    return;
+  }
+  list.innerHTML = logs.map(l=>{
+    const chips = (l.checks||[]).map(id=>{
+      const c=CHECKS.find(x=>x.id===id);
+      return c?`<span class="chip">${c.label}`:''
+    }).join('</span>');
+    const dc = l.day>=8?'var(--green)':l.day>=5?'var(--orange)':'#ef4444';
+    const wd = new Date(l.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    return `<div class="day-card">
+      <div class="day-card-header">
+        <div><div class="day-card-date">${wd}</div><div class="day-card-focus">${l.focus||''}</div></div>
+        <div class="day-card-score" style="color:${dc}">${l.day||'—'}<span style="font-size:.7rem;color:var(--muted)">/10</span></div>
+      </div>
+      <div class="chips">${chips||'<span class="chip miss">Nothing checked</span>'}</div>
+      ${l.notes?`<div class="day-note">${l.notes}</div>`:''}
+      ${l.quote?`<div class="day-quote">"${l.quote.slice(0,90)}${l.quote.length>90?'…':''}" — ${l.quoteAuthor}</div>`:''}
+      <div class="day-metrics">
+        ${l.energy?`⚡ Energy: ${l.energy}/10`:''} ${l.sleep?`🌙 Sleep: ${l.sleep}h`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='today') renderToday();
+  if(name==='log') renderLogForm();
+  if(name==='history') renderHistory();
+  if(name==='about') renderHistory();
+  window.scrollTo(0,0);
+}
+
+function shareQuote() {
+  const q = getQuote();
+  const text = `"${q.text}"\n— ${q.author}\n\nGo One More 🔥`;
+  if (navigator.share) navigator.share({text});
+  else { navigator.clipboard?.writeText(text); showToast('Copied!'); }
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function clearAllData() {
+  if(!confirm('Clear all log data? Cannot be undone.')) return;
+  const keys=[];
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('gom_'))keys.push(k);}
+  keys.forEach(k=>localStorage.removeItem(k));
+  renderHistory(); showToast('Cleared');
+}
+
+window.addEventListener('load', renderToday);
+</script>
+</body>
+</html>
