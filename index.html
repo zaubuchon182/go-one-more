@@ -149,6 +149,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
 .section-divider{height:1px;background:var(--border);margin:18px 0}
 .log-saved-badge{font-size:.72rem;color:var(--green);font-weight:600}
+
+/* WORKOUT ENTRY FORM */
+.workout-form{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:10px}
+.workout-inputs{display:grid;grid-template-columns:1fr 52px 52px 60px;gap:8px;align-items:center;margin-bottom:0}
+.workout-input{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 11px;color:var(--text);font-size:.85rem;font-family:inherit;outline:none;width:100%;min-width:0}
+.workout-input:focus{border-color:var(--orange)}
+.workout-input::placeholder{color:var(--muted)}
+.workout-input.num{text-align:center}
+.workout-add-btn{background:var(--orange);color:#fff;border:none;border-radius:10px;padding:10px 0;font-size:.85rem;font-weight:700;cursor:pointer;width:100%;letter-spacing:.02em}
+.workout-add-btn:active{filter:brightness(.85)}
+.workout-col-labels{display:grid;grid-template-columns:1fr 52px 52px 60px;gap:8px;margin-bottom:5px;padding:0 1px}
+.workout-col-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:center}
+.workout-col-label:first-child{text-align:left}
+.workout-entries{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.workout-entry{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.workout-entry-info{display:flex;flex-direction:column;gap:2px}
+.workout-entry-name{font-size:.88rem;font-weight:600;color:var(--text)}
+.workout-entry-meta{font-size:.72rem;color:var(--muted)}
+.workout-entry-remove{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:2px 6px;border-radius:6px;line-height:1}
+.workout-entry-remove:active{color:#ef4444}
+.workout-empty{font-size:.78rem;color:var(--muted);text-align:center;padding:10px 0}
+.day-workouts{margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.day-workouts-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px}
+.day-workout-item{font-size:.75rem;color:var(--text);padding:2px 0}
 </style>
 </head>
 <body>
@@ -219,6 +243,31 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <div class="log-section" id="logExSection" style="display:none">
     <div class="log-title">Suggested Exercises</div>
     <div class="ex-list" id="logExList"></div>
+  </div>
+
+  <!-- Workout entry form -->
+  <div class="log-section">
+    <div class="log-title">My Workout</div>
+    <div class="workout-form">
+      <div class="workout-col-labels">
+        <div class="workout-col-label">Exercise</div>
+        <div class="workout-col-label">Sets</div>
+        <div class="workout-col-label">Reps</div>
+        <div class="workout-col-label">Weight</div>
+      </div>
+      <div class="workout-inputs">
+        <input class="workout-input" id="wExercise" type="text" placeholder="e.g. Bench Press" autocomplete="off">
+        <input class="workout-input num" id="wSets" type="number" placeholder="4" min="1" max="20">
+        <input class="workout-input num" id="wReps" type="number" placeholder="10" min="1" max="100">
+        <input class="workout-input num" id="wWeight" type="number" placeholder="lbs" min="0" max="2000" step="2.5">
+      </div>
+      <div style="margin-top:9px">
+        <button class="workout-add-btn" onclick="addWorkoutEntry()">+ Add Exercise</button>
+      </div>
+      <div class="workout-entries" id="workoutEntries">
+        <div class="workout-empty" id="workoutEmpty">No exercises logged yet — add your first set above.</div>
+      </div>
+    </div>
   </div>
 
   <div class="section-divider"></div>
@@ -650,6 +699,10 @@ function renderLogForm() {
 
   showLogExercises(selectedMuscle);
 
+  // Reset workout entries for fresh render
+  workoutEntries = [];
+  renderWorkoutEntries();
+
   // Restore existing log
   const existing = loadLog(todayStr());
   if (existing) {
@@ -662,6 +715,7 @@ function renderLogForm() {
     if (existing.day) { document.getElementById('daySlider').value=existing.day; document.getElementById('dayVal').textContent=existing.day; }
     if (existing.notes) document.getElementById('notesField').value=existing.notes;
     if (existing.muscle) { selectedMuscle=existing.muscle; showLogExercises(existing.muscle); updateMuscleButtons(existing.muscle); }
+    if (existing.workouts?.length) { workoutEntries = [...existing.workouts]; renderWorkoutEntries(); }
     document.getElementById('logSavedBadge').style.display='block';
     document.getElementById('saveBtn').textContent='Update Log';
   }
@@ -691,6 +745,62 @@ function showLogExercises(muscleKey) {
   list.innerHTML = exs.map((ex,i) => exCardHTML(ex,i+1)).join('');
 }
 
+// ════════════════════════════════════════════════════
+//  WORKOUT ENTRY FORM
+// ════════════════════════════════════════════════════
+let workoutEntries = [];
+
+function addWorkoutEntry() {
+  const name   = document.getElementById('wExercise').value.trim();
+  const sets   = document.getElementById('wSets').value.trim();
+  const reps   = document.getElementById('wReps').value.trim();
+  const weight = document.getElementById('wWeight').value.trim();
+  if (!name) { showToast('Enter an exercise name first'); return; }
+  workoutEntries.push({ name, sets: sets||'—', reps: reps||'—', weight: weight||'' });
+  // clear inputs
+  document.getElementById('wExercise').value = '';
+  document.getElementById('wSets').value = '';
+  document.getElementById('wReps').value = '';
+  document.getElementById('wWeight').value = '';
+  document.getElementById('wExercise').focus();
+  renderWorkoutEntries();
+}
+
+function removeWorkoutEntry(i) {
+  workoutEntries.splice(i, 1);
+  renderWorkoutEntries();
+}
+
+function renderWorkoutEntries() {
+  const container = document.getElementById('workoutEntries');
+  const empty = document.getElementById('workoutEmpty');
+  if (!workoutEntries.length) {
+    if (empty) empty.style.display = 'block';
+    const existing = container.querySelectorAll('.workout-entry');
+    existing.forEach(el => el.remove());
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  // rebuild entries
+  container.querySelectorAll('.workout-entry').forEach(el => el.remove());
+  workoutEntries.forEach((e, i) => {
+    const div = document.createElement('div');
+    div.className = 'workout-entry';
+    const meta = [
+      e.sets !== '—' ? `${e.sets} sets` : null,
+      e.reps !== '—' ? `× ${e.reps} reps` : null,
+      e.weight ? `@ ${e.weight} lbs` : null,
+    ].filter(Boolean).join(' ');
+    div.innerHTML = `
+      <div class="workout-entry-info">
+        <div class="workout-entry-name">${e.name}</div>
+        ${meta ? `<div class="workout-entry-meta">${meta}</div>` : ''}
+      </div>
+      <button class="workout-entry-remove" onclick="removeWorkoutEntry(${i})">✕</button>`;
+    container.appendChild(div);
+  });
+}
+
 function toggleCheck(id) {
   document.getElementById('ci-'+id)?.classList.toggle('checked');
   document.getElementById('cb-'+id)?.classList.toggle('checked');
@@ -708,6 +818,7 @@ function saveLog() {
     day:parseInt(document.getElementById('daySlider').value),
     notes:document.getElementById('notesField').value.trim(),
     quote:q.text, quoteAuthor:q.author, focus:getFocus().title,
+    workouts: [...workoutEntries],
   };
   saveLogData(today, entry);
   document.getElementById('logSavedBadge').style.display='block';
@@ -762,6 +873,11 @@ function renderHistory() {
       <div class="day-metrics">
         ${l.energy?`⚡ Energy: ${l.energy}/10`:''} ${l.sleep?`🌙 Sleep: ${l.sleep}h`:''}
       </div>
+      ${l.workouts?.length ? `
+        <div class="day-workouts">
+          <div class="day-workouts-title">💪 Exercises</div>
+          ${l.workouts.map(w=>`<div class="day-workout-item">${w.name}${w.sets!=='—'?` · ${w.sets}×${w.reps}`:''} ${w.weight?`@ ${w.weight}lbs`:''}</div>`).join('')}
+        </div>` : ''}
     </div>`;
   }).join('');
 }
